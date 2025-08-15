@@ -3,12 +3,12 @@ name: EventPass CI/CD
 on:
   push:
     branches:
-      - main  # Trigger on pushes to main
+      - main  
 
 jobs:
   test-and-deploy:
     name: Test and Deploy
-    runs-on: self-hosted  # Your Ubuntu server as runner
+    runs-on: self-hosted 
 
     environment: production
 
