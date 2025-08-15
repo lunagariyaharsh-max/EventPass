@@ -92,3 +92,9 @@ We will send you an email to choose a Real-World project. If you face any diffic
 * Adherence to Git best practices and practical contributions.
 * Successful implementation, deploymentand CI/CD pipeline.
 * Problem-solving skills and the ability to go beyond basic requirements.
+
+## Project Overview
+The EventPass project is a dynamic web application designed to streamline event management and ticketing, built with a modern tech stack to ensure scalability and user-friendliness. The backend, powered by Node.js and Express, integrates with MongoDB to handle event data, user authentication, and ticket transactions securely via a RESTful API hosted on an AWS EC2 instance (IP: 3.106.242.235). The frontend, developed using React, provides an intuitive interface for users to browse events, purchase tickets, and manage their profiles, with a production build served by Nginx. This project leverages GitHub Actions for CI/CD, utilizing a self-hosted runner on the Ubuntu server to automate testing, building, and deployment, ensuring a robust and efficient development workflow.
+
+## Setup and Deployment
+To set up EventPass locally, clone the repository and install dependencies with yarn install in both the backend and frontend directories. Configure the .env file with MONGO_URI=mongodb://127.0.0.1:27017/EventPass, a JWT_SECRET, and PORT=5000, then run pm2 start server.js for the backend and yarn start for the frontend in development. For deployment, the CI/CD pipeline automates the process on the server, building the frontend and starting the backend with PM2, while Nginx serves the static files. Access the live site at http://3.106.242.235:3000, and report issues or contribute via GitHub Issues or Pull Requests. Note that MongoDB must be running, and EC2 security groups should allow ports 80 and 5000.
