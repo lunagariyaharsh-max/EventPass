@@ -9,12 +9,14 @@ jobs:
   test-and-deploy:
     name: Test and Deploy
     runs-on: self-hosted 
-
     environment: production
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
+
+    - name: Fix permissions
+      run: sudo chown -R $USER:$USER .
 
     - name: Setup Node.js
       uses: actions/setup-node@v3
@@ -37,7 +39,7 @@ jobs:
     - name: Install Backend Dependencies
       working-directory: ./backend
       run: |
-        yarn install  # Use yarn as per your package.json
+        yarn install
 
     - name: Install Frontend Dependencies and Build
       working-directory: ./frontend
