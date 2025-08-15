@@ -8,66 +8,64 @@ on:
 jobs:
   test-and-deploy:
     name: Test and Deploy
-    runs-on: self-hosted 
+    runs-on: self-hosted
     environment: production
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Fix permissions
-      run: sudo chown -R $USER:$USER .
+      - name: Fix permissions
+        run: sudo chown -R $USER:$USER /home/ubuntu/actions-runner/_work/EventPass
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 22
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
 
-    - name: Print Environment Secrets
-      env:
-        MONGO_URI: ${{ secrets.MONGO_URI }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        PORT: ${{ secrets.PORT }}
-      run: |
-        echo "MONGO_URI: $MONGO_URI"
-        echo "JWT_SECRET: $JWT_SECRET"
-        echo "PORT: $PORT"
+      - name: Print Environment Secrets
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
+        run: |
+          echo "MONGO_URI: $MONGO_URI"
+          echo "JWT_SECRET: $JWT_SECRET"
+          echo "PORT: $PORT"
 
-    - name: Stop Existing PM2 Processes
-      run: pm2 stop all || true
+      - name: Stop Existing PM2 Processes
+        run: pm2 stop all || true
 
-    - name: Install Backend Dependencies
-      working-directory: ./backend
-      run: |
-        yarn install
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: yarn install
 
-    - name: Install Frontend Dependencies and Build
-  working-directory: ./frontend
-  run: |
-    rm -f package-lock.json
-    yarn install
-    yarn run build
+      - name: Install Frontend Dependencies and Build
+        working-directory: ./frontend
+        run: |
+          rm -f package-lock.json
+          yarn install
+          yarn run build
 
+      - name: Run Backend Tests
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
+        working-directory: ./backend
+        run: npm test
 
-    - name: Run Backend Tests
-      env:
-        MONGO_URI: ${{ secrets.MONGO_URI }}
-        JWT_SECRET: ${{ secrets.JWT_SECRET }}
-        PORT: ${{ secrets.PORT }}
-      working-directory: ./backend
-      run: npm test
+      - name: Create Backend .env File
+        working-directory: ./backend
+        run: |
+          touch .env
+          echo "${{ secrets.PROD }}" > .env
 
-    - name: Create Backend .env File
-      working-directory: ./backend
-      run: |
-        touch .env
-        echo "${{ secrets.PROD }}" > .env
+      - name: Start Application with PM2
+        working-directory: ./backend
+        run: |
+          pm2 start server.js --name "eventpass-backend" --env production
+          pm2 save
 
-    - name: Start Application with PM2
-      working-directory: ./backend
-      run: |
-        pm2 start server.js --name "eventpass-backend" --env production
-        pm2 save
-
-    - name: Restart PM2 Processes
-      run: pm2 restart all
+      - name: Restart PM2 Processes
+        run: pm2 restart all
