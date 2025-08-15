@@ -42,10 +42,12 @@ jobs:
         yarn install
 
     - name: Install Frontend Dependencies and Build
-      working-directory: ./frontend
-      run: |
-        yarn install
-        yarn run build
+  working-directory: ./frontend
+  run: |
+    rm -f package-lock.json
+    yarn install
+    yarn run build
+
 
     - name: Run Backend Tests
       env:
