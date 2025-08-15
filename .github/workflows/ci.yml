@@ -1,28 +1,69 @@
-name: CI
+name: EventPass CI/CD
 
 on:
-    push:
-        branches:
-            - main
-    pull_request:
-        branches:
-            - main
+  push:
+    branches:
+      - main  # Trigger on pushes to main
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  test-and-deploy:
+    name: Test and Deploy
+    runs-on: self-hosted  # Your Ubuntu server as runner
 
-        steps:
-        - name: Checkout code
-            uses: actions/checkout@v2
+    environment: production
 
-        - name: Set up Node.js
-            uses: actions/setup-node@v2
-            with:
-                node-version: '14'
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-        - name: Install dependencies
-            run: npm install
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 22
 
-        - name: Run tests
-            run: npm test
+    - name: Print Environment Secrets
+      env:
+        MONGO_URI: ${{ secrets.MONGO_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        PORT: ${{ secrets.PORT }}
+      run: |
+        echo "MONGO_URI: $MONGO_URI"
+        echo "JWT_SECRET: $JWT_SECRET"
+        echo "PORT: $PORT"
+
+    - name: Stop Existing PM2 Processes
+      run: pm2 stop all || true
+
+    - name: Install Backend Dependencies
+      working-directory: ./backend
+      run: |
+        yarn install  # Use yarn as per your package.json
+
+    - name: Install Frontend Dependencies and Build
+      working-directory: ./frontend
+      run: |
+        yarn install
+        yarn run build
+
+    - name: Run Backend Tests
+      env:
+        MONGO_URI: ${{ secrets.MONGO_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        PORT: ${{ secrets.PORT }}
+      working-directory: ./backend
+      run: npm test
+
+    - name: Create Backend .env File
+      working-directory: ./backend
+      run: |
+        touch .env
+        echo "${{ secrets.PROD }}" > .env
+
+    - name: Start Application with PM2
+      working-directory: ./backend
+      run: |
+        pm2 start server.js --name "eventpass-backend" --env production
+        pm2 save
+
+    - name: Restart PM2 Processes
+      run: pm2 restart all
